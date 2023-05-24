@@ -106,27 +106,31 @@ int main(int argc, char **argv, char **envp)
 
     while (1)
     {
-        write(STDOUT_FILENO, "#cisfun$ ", 9);
+        write(STDOUT_FILENO, " ($) ", 9);
         fflush(stdout);
         read = getline(&line, &len, stdin);
         if (read != -1)
         {
             cmd = get_cmd(line);
             av = get_argv(line);
-            pid = fork();
-            if (pid < 0)
-            {
-                write(STDERR_FILENO, "Fork Failed", 11);
-                return (1);
+            if (access(cmd, F_OK | X_OK) == -1) {
+                write(STDERR_FILENO, "Command not found\n", 18);
+            } else {
+                pid = fork();
+                if (pid < 0)
+                {
+                    write(STDERR_FILENO, "Fork Failed", 11);
+                    return (1);
+                }
+                else if (pid == 0)
+                {
+                    if (execve(cmd, av, envp) == -1)
+                        perror("./shell");
+                    _exit(0);
+                }
+                else
+                    wait(&status);
             }
-            else if (pid == 0)
-            {
-                if (execve(cmd, av, envp) == -1)
-                    perror("./shell");
-                _exit(0);
-            }
-            else
-                wait(&status);
         }
         else
         {
@@ -141,3 +145,4 @@ int main(int argc, char **argv, char **envp)
     }
     return (0);
 }
+
