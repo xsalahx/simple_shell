@@ -106,7 +106,7 @@ int main(int argc, char **argv, char **envp)
 
     while (1)
     {
-        write(STDOUT_FILENO, " ($) ", 9);
+        write(STDOUT_FILENO, " ($) ",5);
         fflush(stdout);
         read = getline(&line, &len, stdin);
         if (read != -1)
