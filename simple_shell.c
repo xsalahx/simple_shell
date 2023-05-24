@@ -1,148 +1,61 @@
-#include "main.h"
-#include <stdlib.h>
-#include <sys/wait.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <signal.h>
-#include <string.h>
+#include "shell.h"
+
+
+	char **commands = NULL;
+	char *line = NULL;
+	char *shell_name = NULL;
+	int status = 0;
 
 /**
- * get_cmd - get cmd from line
- * @line: line
- * Return: cmd
- */
-char *get_cmd(char *line)
-{
-    int len = 0;
-    char *cmd;
-    int i = 0;
-
-    while (line[i] != '\0' && line[i] != ' ' && line[i] != '\n')
-    {
-        i++;
-        len++;
-    }
-    cmd = (char *)malloc((len + 1) * sizeof(char));
-    if (cmd == NULL)
-        return (NULL);
-    for (i = 0; i < len; i++)
-        cmd[i] = line[i];
-    cmd[len] = '\0';
-
-    return (cmd);
-}
-
-/**
- * get_argv - split line into argv
- * @line: line
- * Return: argv
- */
-#include <string.h>
-
-char **get_argv(char *line)
-{
-    char **argv;
-    int i = 0;
-    int j = 0;
-    int len = 0;
-    int words = 0;
-
-    while (line[i] != '\0')
-    {
-        if (line[i] == ' ')
-            words++;
-        i++;
-    }
-    words++;
-    argv = (char **)malloc((words + 1) * sizeof(char *));
-    if (argv == NULL)
-        return (NULL);
-
-    for (i = 0; i < words; i++)
-    {
-        while (line[j] != '\0' && line[j] != ' ' && line[j] != '\n')
-        {
-            len++;
-            j++;
-        }
-        argv[i] = (char *)malloc((len + 1) * sizeof(char));
-        if (argv[i] == NULL)
-            return (NULL);
-
-        strncpy(argv[i], &line[j - len], len);
-        argv[i][len] = '\0';
-
-        len = 0;
-        while (line[j] == ' ' || line[j] == '\n')
-            j++;
-    }
-
-    argv[i] = NULL;
-    return argv;
-}
-
-/**
- * main - Entry point
- * @argc: arg count
- * @argv: arg vector
- * @envp: environement
+ * main - the main shell code
+ * @argc: number of arguments passed
+ * @argv: program arguments to be parsed
  *
- * Return: status
+ * applies the functions in utils and helpers
+ * implements EOF
+ * Prints error on Failure
+ * Return: 0 on success
  */
-int main(int argc, char **argv, char **envp)
+
+
+int main(int argc __attribute__((unused)), char **argv)
 {
-    char *line;
-    char *cmd;
-    int i;
-    char **av;
-    size_t len = 0;
-    ssize_t read;
-    pid_t pid;
-    int status;
+	char **current_command = NULL;
+	int i, type_command = 0;
+	size_t n = 0;
 
-    (void)argc;
-    (void)argv;
+	signal(SIGINT, ctrl_c_handler);
+	shell_name = argv[0];
+	while (1)
+	{
+		non_interactive();
+		print(" ($) ", STDOUT_FILENO);
+		if (getline(&line, &n, stdin) == -1)
+		{
+			free(line);
+			exit(status);
+		}
+			remove_newline(line);
+			remove_comment(line);
+			commands = tokenizer(line, ";");
 
-    while (1)
-    {
-        write(STDOUT_FILENO, " ($) ",5);
-        fflush(stdout);
-        read = getline(&line, &len, stdin);
-        if (read != -1)
-        {
-            cmd = get_cmd(line);
-            av = get_argv(line);
-            if (access(cmd, F_OK | X_OK) == -1) {
-                write(STDERR_FILENO, "Command not found\n", 18);
-            } else {
-                pid = fork();
-                if (pid < 0)
-                {
-                    write(STDERR_FILENO, "Fork Failed", 11);
-                    return (1);
-                }
-                else if (pid == 0)
-                {
-                    if (execve(cmd, av, envp) == -1)
-                        perror("./shell");
-                    _exit(0);
-                }
-                else
-                    wait(&status);
-            }
-        }
-        else
-        {
-            write(STDOUT_FILENO, "\n", 1);
-            exit(0);
-        }
-        free(line);
-        free(cmd);
-        for (i = 0; av[i] != NULL; i++)
-            free(av[i]);
-        free(av);
-    }
-    return (0);
+		for (i = 0; commands[i] != NULL; i++)
+		{
+			current_command = tokenizer(commands[i], " ");
+			if (current_command[0] == NULL)
+			{
+				free(current_command);
+				break;
+			}
+			type_command = parse_command(current_command[0]);
+
+			/* initializer -   */
+			initializer(current_command, type_command);
+			free(current_command);
+		}
+		free(commands);
+	}
+	free(line);
+
+	return (status);
 }
-
