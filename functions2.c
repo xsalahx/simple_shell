@@ -1,103 +1,121 @@
 #include "shell.h"
 
 /**
- * tokenizer - tokenizes input and stores it into an array
- *@input_string: input to be parsed
- *@delim: delimiter to be used, needs to be one character string
+ *_strcmp - compare two strings
+ *@first: first string to be compared
+ *@second: second string to be compared
  *
- *Return: array of tokens
+ * Return: difference of the two strings
  */
 
-char **tokenizer(char *input_string, char *delim)
-{
-	int num_delim = 0;
-	char **av = NULL;
-	char *token = NULL;
-	char *save_ptr = NULL;
-
-	token = _strtok_r(input_string, delim, &save_ptr);
-
-	while (token != NULL)
-	{
-		av = _realloc(av, sizeof(*av) * num_delim, sizeof(*av) * (num_delim + 1));
-		av[num_delim] = token;
-		token = _strtok_r(NULL, delim, &save_ptr);
-		num_delim++;
-	}
-
-	av = _realloc(av, sizeof(*av) * num_delim, sizeof(*av) * (num_delim + 1));
-	av[num_delim] = NULL;
-
-	return (av);
-}
-
-/**
- *print - prints a string to stdout
- *@string: string to be printed
- *@stream: stream to print out to
- *
- *Return: void, return nothing
- */
-void print(char *string, int stream)
+int _strcmp(char *first, char *second)
 {
 	int i = 0;
 
-	for (; string[i] != '\0'; i++)
-		write(stream, &string[i], 1);
-}
-
-/**
- *remove_newline - removes new line from a string
- *@str: string to be used
- *
- *
- *Return: void
- */
-
-void remove_newline(char *str)
-{
-	int i = 0;
-
-	while (str[i] != '\0')
+	while (first[i] != '\0')
 	{
-		if (str[i] == '\n')
+		if (first[i] != second[i])
 			break;
 		i++;
 	}
-	str[i] = '\0';
+	return (first[i] - second[i]);
 }
 
 /**
- *_strcpy - copies a string to another buffer
- *@source: source to copy from
- *@dest: destination to copy to
+ *_strcat - concatenates two strings
+ *@destination: string to be concatenated to
+ *@source:  string to concatenate
  *
- * Return: void
+ * Return: address of the new string
  */
 
-void _strcpy(char *source, char *dest)
+char *_strcat(char *destination, char *source)
+{
+	char *new_string =  NULL;
+	int len_dest = _strlen(destination);
+	int len_source = _strlen(source);
+
+	new_string = malloc(sizeof(*new_string) * (len_dest + len_source + 1));
+	_strcpy(destination, new_string);
+	_strcpy(source, new_string + len_dest);
+	new_string[len_dest + len_source] = '\0';
+	return (new_string);
+}
+
+/**
+ *_strspn - gets the length of a prefix substring
+ *@str1: string to be searched
+ *@str2: string to be used
+ *
+ *Return: number of bytes in the initial segment of 5 which are part of accept
+ */
+
+int _strspn(char *str1, char *str2)
+{
+	int i = 0;
+	int match = 0;
+
+	while (str1[i] != '\0')
+	{
+		if (_strchr(str2, str1[i]) == NULL)
+			break;
+		match++;
+		i++;
+	}
+	return (match);
+}
+
+/**
+ *_strcspn - computes segment of str1 which consists of characters not in str2
+ *@str1: string to be searched
+ *@str2: string to be used
+ *
+ *Return: index at which a char in str1 exists in str2
+ */
+
+
+int _strcspn(char *str1, char *str2)
+{
+	int len = 0, i;
+
+	for (i = 0; str1[i] != '\0'; i++)
+	{
+		if (_strchr(str2, str1[i]) != NULL)
+			break;
+		len++;
+	}
+	return (len);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+ *_strchr - locates a char in a string
+ *@s: string to be searched
+ *@c: char to be checked
+ *
+ *Return: pointer to the first occurence of c in s
+ */
+
+char *_strchr(char *s, char c)
 {
 	int i = 0;
 
-	for (; source[i] != '\0'; i++)
-		dest[i] = source[i];
-	dest[i] = '\0';
-}
-
-/**
- *_strlen - counts string length
- *@string: string to be counted
- *
- * Return: length of the string
- */
-
-int _strlen(char *string)
-{
-	int len = 0;
-
-	if (string == NULL)
-		return (len);
-	for (; string[len] != '\0'; len++)
+	for (; s[i] != c && s[i] != '\0'; i++)
 		;
-	return (len);
+	if (s[i] == c)
+		return (s + i);
+	else
+		return (NULL);
 }
+
